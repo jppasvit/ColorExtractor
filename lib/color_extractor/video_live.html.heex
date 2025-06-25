@@ -1,0 +1,13 @@
+<%!-- <%= form_for @uploads.video, "#", [phx_submit: "upload", multipart: true], fn f -> %>
+  <%= live_file_input @uploads.video %>
+  <button>Upload</button>
+<% end %> --%>
+
+<h2>Extracted Colors</h2>
+<div style="display: flex; gap: 10px;">
+  <%!-- <%= for color <- @colors || [] do %>
+    <div style={"width: 60px; height: 60px; background-color: #{color};"}>
+      <%= color %>
+    </div>
+  <% end %> --%>
+</div>
