@@ -25,4 +25,14 @@ defmodule ColorExtractorWeb.VideoLive do
       %{colors: colors} -> {:noreply, assign(socket, colors: colors)}
     end
   end
+
+  @impl true
+  def handle_event("extract", _params, socket) do
+    extract_frame("priv/static/uploads/landscape.mp4")
+    colors = extract_colors("frame.jpg")
+    # {:ok, %{colors: colors}}
+    {:noreply, socket}
+  end
+
+
 end

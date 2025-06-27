@@ -18,7 +18,7 @@ defmodule ColorExtractor.VideoUtils do
         "-format", "%c",
         "-depth", "8",
         "-colors", "5",
-        "histogram:info:-"
+        "histogram:info:histogram.txt"
       ])
 
     parse_colors(output)

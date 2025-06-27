@@ -1,13 +1,8 @@
-<%!-- <%= form_for @uploads.video, "#", [phx_submit: "upload", multipart: true], fn f -> %>
-  <%= live_file_input @uploads.video %>
-  <button>Upload</button>
-<% end %> --%>
-
-<h2>Extracted Colors</h2>
-<div style="display: flex; gap: 10px;">
-  <%!-- <%= for color <- @colors || [] do %>
-    <div style={"width: 60px; height: 60px; background-color: #{color};"}>
-      <%= color %>
-    </div>
-  <% end %> --%>
+<div>
+  <h1 class="text-2xl font-bold mb-4">Video Color Extractor</h1>
+  <p class="mb-4">Click the button below to extract colors from the video.</p>
+  
+  <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract">Extract</button>
 </div>
+
+
