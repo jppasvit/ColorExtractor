@@ -3,6 +3,13 @@
   <p class="mb-4">Click the button below to extract colors from the video.</p>
   
   <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract">Extract</button>
+
+
+  <div id="color-box" phx-hook="ColorReceiver">
+      <h2>Colors:</h2>
+      <div id="colors" class="flex gap-2 mt-2"></div>
+    </div>
+    
 </div>
 
 

@@ -28,4 +28,12 @@ defmodule ColorExtractor.VideoUtils do
     Regex.scan(~r/#([A-Fa-f0-9]{6})/, histogram_output)
     |> Enum.map(fn [_, hex] -> "##{hex}" end)
   end
+
+  def extract_colors_python(path) do
+    {json, 0} =
+      System.cmd("python3", ["scripts/color-extractor.py", path])
+
+    Jason.decode!(json)
+  end
+
 end
