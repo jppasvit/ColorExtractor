@@ -36,3 +36,6 @@ color_extractor-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Ignore venvn for Python dependencies.
+/venv/
+
