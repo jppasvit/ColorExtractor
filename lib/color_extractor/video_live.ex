@@ -67,10 +67,10 @@ defmodule ColorExtractorWeb.VideoLive do
       Logger.info("Extracted colors: #{inspect(colors)}")
       Map.put(acc_color_map, index, colors)
     end)
-    # File.write!(
-    #   "tmp/landscape/colors_by_second.json",
-    #   Jason.encode!(color_map, pretty: true)
-    # )
+    File.write!(
+      "tmp/landscape/colors_by_second.json",
+      Jason.encode!(color_map, pretty: true)
+    )
     {:noreply, push_event(socket, "color_timeline", %{colors: color_map})}
   end
 
@@ -90,14 +90,17 @@ defmodule ColorExtractorWeb.VideoLive do
   end
 
   def list_files_with_paths(dir) do
-    Logger.error(dir)
     case File.ls(dir) do
       {:ok, files} ->
         files
         |> Enum.map(&Path.join(dir, &1))
+        |> Enum.filter(fn path ->
+          File.regular?(path) and
+          (Path.extname(path) in [".jpg", ".jpeg", ".png"])
+        end)
 
       {:error, reason} ->
-        IO.puts("Failed to list files: #{reason}")
+        Logger.error("Failed to list files: #{reason}")
         []
     end
   end
