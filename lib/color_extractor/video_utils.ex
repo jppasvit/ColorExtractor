@@ -36,4 +36,13 @@ defmodule ColorExtractor.VideoUtils do
     Jason.decode!(json)
   end
 
+  def extract_frames(file_name) do
+    File.mkdir_p!("tmp/#{file_name}")
+    System.cmd("ffmpeg", [
+      "-i", "priv/static/uploads/landscape.mp4",
+      "-vf", "fps=1",
+      "tmp/#{file_name}/frame_%03d.jpg"
+    ])
+  end
+
 end

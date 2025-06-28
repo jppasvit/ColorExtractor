@@ -50,6 +50,4 @@ defmodule ColorExtractorWeb.Endpoint do
   plug Plug.Session, @session_options
   plug ColorExtractorWeb.Router
 
-  plug Plug.Static,
-    at: "/uploads", from: "priv/static/uploads", gzip: false
 end

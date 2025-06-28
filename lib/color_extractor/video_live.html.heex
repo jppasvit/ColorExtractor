@@ -2,13 +2,29 @@
   <h1 class="text-2xl font-bold mb-4">Video Color Extractor</h1>
   <p class="mb-4">Click the button below to extract colors from the video.</p>
   
-  <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract">Extract</button>
-
-
-  <div id="color-box" phx-hook="ColorReceiver">
-      <h2>Colors:</h2>
-      <div id="colors" class="flex gap-2 mt-2"></div>
+  <div> 
+    <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract">Extract</button>
+    <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="process">Process</button>
+    <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract-process-save">Extract Process Save</button>
+    <div id="color-box" phx-hook="ColorReceiverFlow">
+        <h2>Colors:</h2>
+        <div id="colorsFlow" class="flex gap-2 mt-2"></div>
     </div>
+    <br /> 
+  </div>
+  
+  <div id="video-color-container" phx-hook="ColorReceiver">
+    <video id="my-video" controls width="480">
+      <source src="uploads/landscape.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    <div id="colors" class="flex gap-2 mt-2">
+    <h2>Colors:</h2>
+      <!-- Color boxes will be inserted here -->
+    </div>
+  </div>
+
     
 </div>
 
