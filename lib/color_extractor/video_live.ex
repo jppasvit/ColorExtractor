@@ -54,24 +54,92 @@ defmodule ColorExtractorWeb.VideoLive do
     {:noreply, socket}
   end
 
+  # @impl true
+  # def handle_event("extract-process-save", _params, socket) do
+  #   Logger.info("Extracting frames")
+  #   # extract_frames("landscape")
+  #   image_paths = list_files_with_paths("tmp/landscape")
+  #   color_map = %{}
+  #   color_map = Enum.with_index(image_paths)
+  #   |> Enum.reduce(%{}, fn {image_path, index}, acc_color_map ->
+  #     Logger.info("Processing image (#{index}): #{image_path}")
+  #     colors = extract_colors_python(image_path)
+  #     Logger.info("Extracted colors: #{inspect(colors)}")
+  #     Map.put(acc_color_map, index, colors)
+  #   end)
+  #   File.write!(
+  #     "tmp/landscape/colors_by_second.json",
+  #     Jason.encode!(color_map, pretty: true)
+  #   )
+  #   {:noreply, push_event(socket, "color_timeline", %{colors: color_map})}
+  # end
+
   @impl true
   def handle_event("extract-process-save", _params, socket) do
-    Logger.info("Extracting frames")
-    # extract_frames("landscape")
-    image_paths = list_files_with_paths("tmp/landscape")
-    color_map = %{}
-    color_map = Enum.with_index(image_paths)
-    |> Enum.reduce(%{}, fn {image_path, index}, acc_color_map ->
-      Logger.info("Processing image (#{index}): #{image_path}")
-      colors = extract_colors_python(image_path)
-      Logger.info("Extracted colors: #{inspect(colors)}")
-      Map.put(acc_color_map, index, colors)
+    # Start watching the directory
+    watch_path = Path.expand("/tmp/landscape")
+    Logger.info("#{inspect(watch_path)}")
+    {:ok, watcher_pid} = FileSystem.start_link(dirs: [watch_path])
+    FileSystem.subscribe(watcher_pid)
+
+    liveview_pid = self()
+    Task.start(fn ->
+      extract_frames("landscape")
+      send(liveview_pid, :frames_extraction_complete)
     end)
+
+    # Save initial state
+    {:noreply,
+      socket
+      |> assign(:loading, true)
+      |> assign(:watcher, watcher_pid)
+      |> assign(:color_map, %{})}
+  end
+
+  @impl true
+  def handle_info(
+        {:file_event, _watcher_pid, {path, events}},
+        %{assigns: %{color_map: color_map}} = socket
+      ) do
+    Logger.info("File event detected: #{inspect({path, events})}")
+    # require IEx
+    # IEx.pry()
+    if Enum.any?(events, &(&1 in [:modified, :created])) and String.ends_with?(path, ".jpg") do
+      unless Map.has_key?(color_map, path) do
+        Logger.info("New frame detected: #{path}")
+        colors = extract_colors_python(path)
+
+        new_color_map = Map.put(color_map, map_size(color_map), colors)
+
+        # require IEx
+        # IEx.pry()
+
+        # Push update to frontend
+
+
+        #{:noreply, assign(socket, :color_map, new_color_map)}
+        {:noreply, socket
+          |> assign(:color_map, new_color_map)
+          |> push_event("color_timeline", %{colors: new_color_map})}
+      else
+        {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info(:frames_extraction_complete, %{assigns: %{color_map: color_map}} = socket) do
+    Logger.error("FRAMES EXTRACTION COMPLETE")
+    # require IEx
+    # IEx.pry()
     File.write!(
       "tmp/landscape/colors_by_second.json",
       Jason.encode!(color_map, pretty: true)
     )
-    {:noreply, push_event(socket, "color_timeline", %{colors: color_map})}
+
+    {:noreply, assign(socket, :loading, false)}
   end
 
   @impl true

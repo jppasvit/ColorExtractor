@@ -41,7 +41,7 @@ defmodule ColorExtractor.VideoUtils do
     System.cmd("ffmpeg", [
       "-i", "priv/static/uploads/landscape.mp4",
       "-vf", "fps=1",
-      "tmp/#{file_name}/frame_%03d.jpg"
+      "/tmp/#{file_name}/frame_%03d.jpg"
     ])
   end
 
