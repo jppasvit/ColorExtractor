@@ -9,7 +9,8 @@ module.exports = {
   content: [
     "./js/**/*.js",
     "../lib/color_extractor_web.ex",
-    "../lib/color_extractor_web/**/*.*ex"
+    "../lib/color_extractor_web/**/*.*ex",
+    "../lib/color_extractor/**/*.heex" // Include HEEx templates from color_extractor
   ],
   theme: {
     extend: {

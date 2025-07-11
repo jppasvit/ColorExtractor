@@ -104,7 +104,7 @@ defmodule ColorExtractorWeb.VideoLive do
     Logger.info("File event detected: #{inspect({path, events})}")
     # require IEx
     # IEx.pry()
-    if Enum.any?(events, &(&1 in [:modified, :created])) and String.ends_with?(path, ".jpg") do
+    if Enum.any?(events, &(&1 in [:created])) and String.ends_with?(path, ".jpg") do
       unless Map.has_key?(color_map, path) do
         Logger.info("New frame detected: #{path}")
         colors = extract_colors_python(path)

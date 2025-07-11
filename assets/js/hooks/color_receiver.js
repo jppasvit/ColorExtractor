@@ -19,8 +19,8 @@ export const ColorReceiver = {
     this.container.innerHTML = ""
     colors.forEach(color => {
       const div = document.createElement("div")
-      div.style.width = "40px"
-      div.style.height = "40px"
+      div.style.width = "216px"
+      div.style.height = "50px"
       div.style.backgroundColor = color
       div.title = color
       this.container.appendChild(div)
