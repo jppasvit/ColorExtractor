@@ -52,22 +52,37 @@ defmodule ColorExtractorWeb.VideoLive do
 
   def handle_event("upload", _params, socket) do
     Logger.info("STARTING UPLOAD")
-    uploaded_files =
-      consume_uploaded_entries(socket, :video, fn %{path: path}, entry ->
-        uploads_dir = Path.expand("priv/static/uploads")
-        File.mkdir_p!(uploads_dir)
+    uploaded_files = []
+    try do
+      uploaded_files =
+        consume_uploaded_entries(socket, :video, fn %{path: path}, entry ->
+          uploads_dir = Path.expand("priv/static/uploads")
+          File.mkdir_p!(uploads_dir)
 
-        unique_name =
-          "#{Path.rootname(entry.client_name)}_#{DateTime.utc_now() |> DateTime.to_unix()}#{Path.extname(entry.client_name)}"
+          unique_name =
+            "#{Path.rootname(entry.client_name)}_#{DateTime.utc_now() |> DateTime.to_unix()}#{Path.extname(entry.client_name)}"
 
-        dest_path = Path.join(uploads_dir, unique_name)
-        Logger.info("Saving uploaded file to: #{dest_path}")
-        File.cp!(path, dest_path)
+          dest_path = Path.join(uploads_dir, unique_name)
+          Logger.info("Saving uploaded file to: #{dest_path}")
+          File.cp!(path, dest_path)
+          Logger.info("ENDING UPLOAD")
+          {:ok, unique_name}
+        end)
 
-        {:ok, unique_name}
-      end)
+        socket = socket
+          |> assign(:uploaded_files, uploaded_files)
+          |> put_flash(:info, "File uploaded successfully!")
 
-    {:noreply, assign(socket, :uploaded_files, uploaded_files)}
+      {:noreply, socket}
+    rescue e ->
+      Logger.error("Upload failed: #{inspect(e)}")
+
+      socket = socket
+          |> assign(:uploaded_files, uploaded_files)
+          |> put_flash(:info, "Failed to upload the video.")
+
+      {:noreply, socket}
+    end
   end
 
   @impl true

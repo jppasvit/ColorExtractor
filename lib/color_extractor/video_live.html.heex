@@ -13,28 +13,28 @@
     <br /> 
   </div> --%>
 
-  <h2 class="text-xl font-bold mb-4">Upload Video (LiveView)</h2>
+  <h2 class="text-xl font-bold mb-4">Upload Video</h2>
 
   <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
     <.live_file_input upload={@uploads.video} />
     <%!-- <pre><%= inspect(@uploads) %></pre> --%>
+    <br />
     <button type="submit"
-      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-3">
+      class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white">
       Upload
     </button>
   </form>
 
-  <%= for file <- @uploaded_files do %>
+
+  <%!-- <%= for file <- @uploaded_files do %>
     <p class="mt-2 text-green-700">✅ Uploaded: <%= file %></p>
     <video class="mt-2" width="400" controls>
       <source src={"/uploads/#{file}"} type="video/mp4">
       Your browser does not support the video tag.
     </video>
-  <% end %>
+  <% end %> --%>
 
-
-
-  <%!-- <div id="video-color-container" phx-hook="ColorReceiver">
+  <div id="video-color-container" phx-hook="ColorReceiver">
     <video id="my-video" controls width="1080">
       <source src="uploads/landscape.mp4" type="video/mp4" />
       Your browser does not support the video tag.
@@ -44,7 +44,7 @@
     <h2>Colors:</h2>
       <!-- Color boxes will be inserted here -->
     </div>
-  </div> --%>
+  </div>
 
     
 </div>
