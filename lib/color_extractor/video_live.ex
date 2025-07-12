@@ -38,9 +38,42 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    form = to_form(%{})
-    #{:ok, socket}
-    {:ok, assign(socket, video_form: form)}
+    socket =
+      socket
+      |> allow_upload(:video,
+        accept: ~w(video/mp4 video/webm video/ogg),
+        max_entries: 1,
+        max_file_size: 100 * 1_024 * 1_024 # 100 MB
+      )
+      |> assign(:uploaded_files, [])
+
+    {:ok, socket}
+  end
+
+  def handle_event("upload", _params, socket) do
+    Logger.info("STARTING UPLOAD")
+    uploaded_files =
+      consume_uploaded_entries(socket, :video, fn %{path: path}, entry ->
+        uploads_dir = Path.expand("priv/static/uploads")
+        File.mkdir_p!(uploads_dir)
+
+        unique_name =
+          "#{Path.rootname(entry.client_name)}_#{DateTime.utc_now() |> DateTime.to_unix()}#{Path.extname(entry.client_name)}"
+
+        dest_path = Path.join(uploads_dir, unique_name)
+        Logger.info("Saving uploaded file to: #{dest_path}")
+        File.cp!(path, dest_path)
+
+        {:ok, unique_name}
+      end)
+
+    {:noreply, assign(socket, :uploaded_files, uploaded_files)}
+  end
+
+  @impl true
+  def handle_event("validate", _params, socket) do
+    # No-op or update assigns if needed
+    {:noreply, socket}
   end
 
   @impl true

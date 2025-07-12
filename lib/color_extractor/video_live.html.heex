@@ -13,13 +13,28 @@
     <br /> 
   </div> --%>
 
-  <.form for={@video_form} action={~p"/upload"} method="post" enctype="multipart/form-data">
-    <label>Upload Video:</label>
-    <input type="file" name="video" accept="video/*" />
-    <br /> 
-    <button class="bg-brand/5 text-brand py-2 px-4 mt-3 mb-3 rounded hover:bg-orange-800 hover:text-white" type="submit">Upload</button>
-  </.form>
-  <div id="video-color-container" phx-hook="ColorReceiver">
+  <h2 class="text-xl font-bold mb-4">Upload Video (LiveView)</h2>
+
+  <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
+    <.live_file_input upload={@uploads.video} />
+    <%!-- <pre><%= inspect(@uploads) %></pre> --%>
+    <button type="submit"
+      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-3">
+      Upload
+    </button>
+  </form>
+
+  <%= for file <- @uploaded_files do %>
+    <p class="mt-2 text-green-700">✅ Uploaded: <%= file %></p>
+    <video class="mt-2" width="400" controls>
+      <source src={"/uploads/#{file}"} type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  <% end %>
+
+
+
+  <%!-- <div id="video-color-container" phx-hook="ColorReceiver">
     <video id="my-video" controls width="1080">
       <source src="uploads/landscape.mp4" type="video/mp4" />
       Your browser does not support the video tag.
@@ -29,7 +44,7 @@
     <h2>Colors:</h2>
       <!-- Color boxes will be inserted here -->
     </div>
-  </div>
+  </div> --%>
 
     
 </div>
