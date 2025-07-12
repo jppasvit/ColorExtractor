@@ -56,7 +56,8 @@ defmodule ColorExtractor.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:uuid, "~> 1.1"},
-      {:file_system, "~> 1.0.0"}
+      {:file_system, "~> 1.0.0"},
+      {:image, "~> 0.61.0"}
     ]
   end
 

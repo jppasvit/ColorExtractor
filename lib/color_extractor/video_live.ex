@@ -107,7 +107,8 @@ defmodule ColorExtractorWeb.VideoLive do
     if Enum.any?(events, &(&1 in [:created])) and String.ends_with?(path, ".jpg") do
       unless Map.has_key?(color_map, path) do
         Logger.info("New frame detected: #{path}")
-        colors = extract_colors_python(path)
+        # colors = extract_colors_python(path)
+        colors = extract_colors_elixir(path)
 
         new_color_map = Map.put(color_map, map_size(color_map), colors)
 

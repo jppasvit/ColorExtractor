@@ -1,4 +1,5 @@
 defmodule ColorExtractor.VideoUtils do
+  require Logger
   # Extract one frame using FFmpeg
   def extract_frame(video_path) do
     System.cmd("ffmpeg", [
@@ -34,6 +35,22 @@ defmodule ColorExtractor.VideoUtils do
       System.cmd("python3", ["scripts/color-extractor.py", path])
 
     Jason.decode!(json)
+  end
+
+  def extract_colors_elixir(path) do
+    image = Image.open!(path)
+    case Image.dominant_color(image,[{:top_n, 5}]) do
+      {:ok, colors} ->
+        hex_colors = Enum.map(colors, fn color ->
+          {:ok, hex_color} = Image.Color.rgb_to_hex(color)
+          hex_color
+        end)
+        Logger.info("Extracted colors: #{inspect(hex_colors)}")
+        hex_colors
+      {:error, reason} ->
+        Logger.error("Failed to extract colors: #{reason}")
+        []
+    end
   end
 
   def extract_frames(file_name) do
