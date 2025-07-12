@@ -1,0 +1,15 @@
+<h2>Upload a Video</h2>
+
+<%= if get_flash(@conn, :info) do %>
+  <p class="alert alert-info"><%= get_flash(@conn, :info) %></p>
+<% end %>
+
+<%= if get_flash(@conn, :error) do %>
+  <p class="alert alert-danger"><%= get_flash(@conn, :error) %></p>
+<% end %>
+
+<.form for={%{}} action={~p"/upload"} method="post" enctype="multipart/form-data">
+  <label for="video">Select Video File:</label>
+  <input type="file" name="video" accept="video/*" required />
+  <button type="submit">Upload</button>
+</.form>

@@ -24,6 +24,8 @@ defmodule ColorExtractorWeb.Router do
     pipe_through :browser
 
     live "/", VideoLive, :index
+    get "/upload", UploadController, :new
+    post "/upload", UploadController, :create
   end
 
   # Other scopes may use custom stacks.

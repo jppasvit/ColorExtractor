@@ -45,7 +45,7 @@ defmodule ColorExtractor.VideoUtils do
           {:ok, hex_color} = Image.Color.rgb_to_hex(color)
           hex_color
         end)
-        Logger.info("Extracted colors: #{inspect(hex_colors)}")
+        # Logger.info("Extracted colors: #{inspect(hex_colors)}")
         hex_colors
       {:error, reason} ->
         Logger.error("Failed to extract colors: #{reason}")

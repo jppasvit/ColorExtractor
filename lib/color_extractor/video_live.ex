@@ -38,7 +38,9 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket}
+    form = to_form(%{})
+    #{:ok, socket}
+    {:ok, assign(socket, video_form: form)}
   end
 
   @impl true
@@ -132,7 +134,7 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def handle_info(:frames_extraction_complete, %{assigns: %{color_map: color_map}} = socket) do
-    Logger.error("FRAMES EXTRACTION COMPLETE")
+    Logger.info("FRAMES EXTRACTION COMPLETE")
     # require IEx
     # IEx.pry()
     File.write!(
