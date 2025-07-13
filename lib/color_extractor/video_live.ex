@@ -5,6 +5,7 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    videos_to_select = list_files_with_paths(uploads_path(), [".mp4", ".webm", ".ogg"])
     socket =
       socket
       |> allow_upload(:video,
@@ -14,10 +15,12 @@ defmodule ColorExtractorWeb.VideoLive do
       )
       |> assign(:uploaded_files, [])
       |> assign(:uploaded_video, nil)
+      |> assign(:videos_to_select, videos_to_select)
 
     {:ok, socket}
   end
 
+ @impl true
   def handle_event("upload", _params, socket) do
     Logger.info("Starting video upload...")
     uploaded_files = []
@@ -47,6 +50,18 @@ defmodule ColorExtractorWeb.VideoLive do
 
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_event("select_video", %{"video" => video_selected}, socket) do
+    videos_to_select = list_files_with_paths(uploads_path(), [".mp4", ".webm", ".ogg"])
+    file_name = Path.basename(video_selected)
+    video = "/uploads/#{file_name}"
+    new_color_map = load_color_file(file_name)
+    {:noreply,
+      socket
+        |> assign(videos_to_select: videos_to_select, uploaded_video: video)
+        |> push_event("color_timeline", %{colors: new_color_map})}
   end
 
   @impl true

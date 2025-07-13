@@ -22,12 +22,12 @@
     <div>
       <h2 class="text-xl font-bold mb-4">Choose Video</h2>
         <.form for={%{}} phx-change="select_video">
-          <div class="mb-4">
-            <label class="block font-medium mb-2">Video</label>
+          <div>
             <select name="video" class="border rounded px-2 py-1">
-              <%!-- <%= for video <- @videos do %>
-                <option value={video}><%= video %></option>
-              <% end %> --%>
+              <option value="" disabled selected hidden>Select video</option>
+              <%= for video <- @videos_to_select do %>
+                <option value={video}><%= Path.basename(video) %></option>
+              <% end %>
             </select>
           </div>
         </.form>

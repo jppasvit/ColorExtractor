@@ -11,6 +11,11 @@ defmodule ColorExtractor.VideoUtils do
     Path.expand("extractions")
   end
 
+  # File name for colors by second
+  def colors_file_name do
+    "colors_by_second.json"
+  end
+
   # Extract one frame using FFmpeg
   def extract_frame(video_path) do
     System.cmd("ffmpeg", [
@@ -78,14 +83,14 @@ defmodule ColorExtractor.VideoUtils do
   end
 
   # List all files in a directory with their full paths
-  def list_files_with_paths(dir) do
+  def list_files_with_paths(dir, file_extensions \\ [".jpg", ".jpeg", ".png"] ) do
     case File.ls(dir) do
       {:ok, files} ->
         files
         |> Enum.map(&Path.join(dir, &1))
         |> Enum.filter(fn path ->
           File.regular?(path) and
-          (Path.extname(path) in [".jpg", ".jpeg", ".png"])
+          (Path.extname(path) in file_extensions)
         end)
 
       {:error, reason} ->
@@ -115,7 +120,18 @@ defmodule ColorExtractor.VideoUtils do
     "#{Path.rootname(file_name)}_#{unique_id}_#{timestamp}#{Path.extname(file_name)}"
   end
 
+  # Load color file from extractions directory
+  def load_color_file(file_name) do
+    file_path = Path.join(extractions_path(), file_name |> Path.rootname()) |> Path.join(colors_file_name())
+    case File.read(file_path) do
+      {:ok, content} ->
+        Jason.decode!(content)
 
+      {:error, reason} ->
+        Logger.error("Failed to read color file: #{reason}")
+        []
+    end
+  end
 
 
 

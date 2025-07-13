@@ -42,3 +42,6 @@ npm-debug.log
 # Color extractions
 /extractions/
 
+# Video samples
+/video_samples/
+
