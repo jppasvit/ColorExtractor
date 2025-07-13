@@ -29,7 +29,7 @@ defmodule ColorExtractorWeb.VideoLive do
       end
 
       video_name = List.first(uploaded_files)
-      video_url = "/uploads/#{video_name}?v=#{System.system_time(:millisecond)}"
+      video_url = "/uploads/#{video_name}"
 
       socket = socket
         |> assign(:uploaded_files, uploaded_files)

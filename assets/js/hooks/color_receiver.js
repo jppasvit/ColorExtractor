@@ -1,28 +1,36 @@
-// TODO: Improve to avoid rechecking for video element every second
 
 export const ColorReceiver = {
   mounted() {
     console.log("ColorReceiver hook mounted!") 
+    this.setupVideo()
     this.handleEvent("color_timeline", ({ colors }) => {
       console.log("Color timeline received:", colors)
       this.colorsMap = colors
       this.container = document.getElementById("colors")
-      this.waitForVideo()
     })
   },
 
-  waitForVideo() {
+  updated() {
+    console.log("ColorReceiver hook updated!")
+    if (this.video) {
+      console.log("Video element already exists, reloading...")
+      this.video.load()
+    }
+  },
+
+  setupVideo() {
     this.checkInterval = setInterval(() => {
       console.log("Checking for video element...")
       this.video = document.getElementById("my-video")
       if (this.video) {
+        console.log("Video element found!")
         clearInterval(this.checkInterval)
-        this.addListener()
+        this.setupTimeupdateListener()
       }
     }, 1000)
   },
 
-  addListener(){
+  setupTimeupdateListener(){
     console.log("Adding timeupdate listener to video")
     this.video.addEventListener("timeupdate", () => {
         const index = Math.floor(this.video.currentTime)
