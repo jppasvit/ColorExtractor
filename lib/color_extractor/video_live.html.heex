@@ -1,7 +1,83 @@
-<div>
+<div class="flex justify-center">
   <h1 class="text-2xl font-bold mb-4">Video Color Extractor</h1>
-  <%!-- <p class="mb-4">Click the button below to extract colors from the video.</p>
+</div>
+
+<div class="flex flex-col md:flex-row">
+  <div class="w-full md:w-1/2 flex justify-center p-4 hover:bg-brand/5">
+    <div>
+      <h2 class="text-xl font-bold mb-4">Upload Video</h2>
+
+      <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
+        <.live_file_input upload={@uploads.video} />
+        <%!-- <pre><%= inspect(@uploads) %></pre> --%>
+        <br />
+        <button type="submit"
+          class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white">
+          Upload
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="w-full md:w-1/2 flex justify-center p-4 hover:bg-brand/5">
+    <div>
+      <h2 class="text-xl font-bold mb-4">Choose Video</h2>
+        <.form for={%{}} phx-change="select_video">
+          <div class="mb-4">
+            <label class="block font-medium mb-2">Video</label>
+            <select name="video" class="border rounded px-2 py-1">
+              <%!-- <%= for video <- @videos do %>
+                <option value={video}><%= video %></option>
+              <% end %> --%>
+            </select>
+          </div>
+        </.form>
+    </div>
+  </div>
+</div>
+
+<div class="flex justify-center bg-brand/5">
+  <div id="video-color-container" phx-hook="ColorReceiver" phx-update="replace">
+    <%= if @uploaded_video do %>
+      <br />
+      <video id="my-video" width="800" controls>
+        <source src={@uploaded_video} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    <% end %>
+    <div id="colors" class="flex gap-2 mt-2"></div>
+  </div>
+</div>
+
+
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<%!-- <div> 
+ <p class="mb-4">Click the button below to extract colors from the video.</p>
   <div> 
     <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="extract">Extract</button>
     <button class="bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded" phx-click="process">Process</button>
@@ -11,31 +87,8 @@
         <div id="colorsFlow" class="flex gap-2 mt-2"></div>
     </div>
     <br /> 
-  </div> --%>
+  </div> 
+</div> --%>
 
-  <h2 class="text-xl font-bold mb-4">Upload Video</h2>
-
-  <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
-    <.live_file_input upload={@uploads.video} />
-    <%!-- <pre><%= inspect(@uploads) %></pre> --%>
-    <br />
-    <button type="submit"
-      class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white">
-      Upload
-    </button>
-  </form>
-
-  <div id="video-color-container" phx-hook="ColorReceiver" phx-update="replace">
-    <%= if @uploaded_video do %>
-      <video id="my-video" width="1080" controls>
-        <source src={@uploaded_video} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-    <% end %>
-    <div id="colors" class="flex gap-2 mt-2"></div>
-  </div>
-
-    
-</div>
 
 

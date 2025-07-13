@@ -19,7 +19,7 @@ defmodule ColorExtractorWeb.VideoLive do
   end
 
   def handle_event("upload", _params, socket) do
-    Logger.info("STARTING UPLOAD")
+    Logger.info("Starting video upload...")
     uploaded_files = []
     try do
       uploaded_files = consume_uploaded_video(socket, :video)
