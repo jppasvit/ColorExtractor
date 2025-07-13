@@ -39,3 +39,6 @@ npm-debug.log
 # Ignore venvn for Python dependencies.
 /venv/
 
+# Color extractions
+/extractions/
+

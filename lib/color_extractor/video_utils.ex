@@ -1,5 +1,16 @@
 defmodule ColorExtractor.VideoUtils do
   require Logger
+
+  # Directory to store uploaded files
+  def uploads_path do
+    Path.expand("priv/static/uploads")
+  end
+
+  # Directory to store color extractions
+  def extractions_path do
+    Path.expand("extractions")
+  end
+
   # Extract one frame using FFmpeg
   def extract_frame(video_path) do
     System.cmd("ffmpeg", [
@@ -25,11 +36,13 @@ defmodule ColorExtractor.VideoUtils do
     parse_colors(output)
   end
 
+  # Parse colors from histogram output
   defp parse_colors(histogram_output) do
     Regex.scan(~r/#([A-Fa-f0-9]{6})/, histogram_output)
     |> Enum.map(fn [_, hex] -> "##{hex}" end)
   end
 
+  # Extract colors using Python script
   def extract_colors_python(path) do
     {json, 0} =
       System.cmd("python3", ["scripts/color-extractor.py", path])
@@ -37,6 +50,7 @@ defmodule ColorExtractor.VideoUtils do
     Jason.decode!(json)
   end
 
+  # Extract colors using Elixir Image library
   def extract_colors_elixir(path) do
     image = Image.open!(path)
     case Image.dominant_color(image,[{:top_n, 5}]) do
@@ -53,13 +67,56 @@ defmodule ColorExtractor.VideoUtils do
     end
   end
 
+  # Extract frames from video using FFmpeg
   def extract_frames(file_name) do
-    File.mkdir_p!("tmp/#{file_name}")
+    file_name_no_ext = Path.rootname(file_name)
     System.cmd("ffmpeg", [
-      "-i", "priv/static/uploads/landscape.mp4",
+      "-i", "priv/static/uploads/#{file_name}",
       "-vf", "fps=1",
-      "/tmp/#{file_name}/frame_%03d.jpg"
+      "/tmp/#{file_name_no_ext}/frame_%03d.jpg"
     ])
   end
+
+  # List all files in a directory with their full paths
+  def list_files_with_paths(dir) do
+    case File.ls(dir) do
+      {:ok, files} ->
+        files
+        |> Enum.map(&Path.join(dir, &1))
+        |> Enum.filter(fn path ->
+          File.regular?(path) and
+          (Path.extname(path) in [".jpg", ".jpeg", ".png"])
+        end)
+
+      {:error, reason} ->
+        Logger.error("Failed to list files: #{reason}")
+        []
+    end
+  end
+
+  # Consume uploaded video file
+  def consume_uploaded_video(socket, video_name \\ :video) do
+      Phoenix.LiveView.consume_uploaded_entries(socket, video_name, fn %{path: path}, entry ->
+        uploads_dir = uploads_path()
+        File.mkdir_p!(uploads_dir)
+        unique_name = unique_file_name(entry.client_name)
+        dest_path = Path.join(uploads_dir, unique_name)
+        Logger.info("Saving uploaded file to: #{dest_path}")
+        File.cp!(path, dest_path)
+        {:ok, unique_name}
+      end)
+  end
+
+  # Generate a unique file name based on the original file name
+  # @spec unique_file_name(String.t()) :: String.t() # TODO: Add type spec in all functions
+  def unique_file_name(file_name) do
+    timestamp = DateTime.utc_now() |> DateTime.to_unix()
+    unique_id = UUID.uuid4()
+    "#{Path.rootname(file_name)}_#{unique_id}_#{timestamp}#{Path.extname(file_name)}"
+  end
+
+
+
+
 
 end

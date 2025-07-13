@@ -3,39 +3,6 @@ defmodule ColorExtractorWeb.VideoLive do
   import ColorExtractor.VideoUtils
   require Logger
 
-  # @impl true
-  # def mount(_, _, socket) do
-  #   {:ok,
-  #    allow_upload(socket, :video,
-  #      accept: ~w(.mp4 .mov),
-  #      max_entries: 1,
-  #      max_file_size: 20_000_000
-  #    )}
-  # end
-
-  # @impl true
-  # def mount(_params, _session, socket) do
-  #   if connected?(socket) do
-  #     port =
-  #       Port.open(
-  #         {:spawn, "ffmpeg -i ./priv/static/uploads/landscape.mp4 -vf fps=1 -f image2pipe -vcodec mjpeg -"},
-  #         [:binary, :stream]
-  #       )
-  #       Logger.error("FFmpeg port opened successfully")
-  #     {:ok, assign(socket, port: port)}
-  #   else
-  #     {:ok, socket}
-  #   end
-  # end
-
-  # @impl true
-  # def mount(_params, _session, socket) do
-  #   # Example list of hex colors (1 per second)
-  #   colors = ["#ff0000", "#00ff00", "#0000ff", "#3333ff", "#ffcc00"]
-  #   socket = push_event(socket, "color_timeline", %{colors: colors})
-  #   {:ok, assign(socket, colors: colors)}
-  # end
-
   @impl true
   def mount(_params, _session, socket) do
     socket =
@@ -54,32 +21,24 @@ defmodule ColorExtractorWeb.VideoLive do
     Logger.info("STARTING UPLOAD")
     uploaded_files = []
     try do
-      uploaded_files =
-        consume_uploaded_entries(socket, :video, fn %{path: path}, entry ->
-          uploads_dir = Path.expand("priv/static/uploads")
-          File.mkdir_p!(uploads_dir)
+      uploaded_files = consume_uploaded_video(socket, :video)
 
-          unique_name =
-            "#{Path.rootname(entry.client_name)}_#{DateTime.utc_now() |> DateTime.to_unix()}#{Path.extname(entry.client_name)}"
+      if Enum.empty?(uploaded_files) do
+        raise "No files were uploaded."
+      end
 
-          dest_path = Path.join(uploads_dir, unique_name)
-          Logger.info("Saving uploaded file to: #{dest_path}")
-          File.cp!(path, dest_path)
-          Logger.info("ENDING UPLOAD")
-          {:ok, unique_name}
-        end)
+      socket = socket
+        |> assign(:uploaded_files, uploaded_files)
+        |> put_flash(:info, "File uploaded successfully!")
+        # |> process_video(List.first(uploaded_files))
 
-        socket = socket
-          |> assign(:uploaded_files, uploaded_files)
-          |> put_flash(:info, "File uploaded successfully!")
-
+      send(self(), {:process_video, List.first(uploaded_files)})
       {:noreply, socket}
     rescue e ->
       Logger.error("Upload failed: #{inspect(e)}")
-
       socket = socket
           |> assign(:uploaded_files, uploaded_files)
-          |> put_flash(:info, "Failed to upload the video.")
+          |> put_flash(:error, "Failed to upload the video: #{e.message}")
 
       {:noreply, socket}
     end
@@ -103,26 +62,6 @@ defmodule ColorExtractorWeb.VideoLive do
     send(self(), {:process_colors, image_paths})
     {:noreply, socket}
   end
-
-  # @impl true
-  # def handle_event("extract-process-save", _params, socket) do
-  #   Logger.info("Extracting frames")
-  #   # extract_frames("landscape")
-  #   image_paths = list_files_with_paths("tmp/landscape")
-  #   color_map = %{}
-  #   color_map = Enum.with_index(image_paths)
-  #   |> Enum.reduce(%{}, fn {image_path, index}, acc_color_map ->
-  #     Logger.info("Processing image (#{index}): #{image_path}")
-  #     colors = extract_colors_python(image_path)
-  #     Logger.info("Extracted colors: #{inspect(colors)}")
-  #     Map.put(acc_color_map, index, colors)
-  #   end)
-  #   File.write!(
-  #     "tmp/landscape/colors_by_second.json",
-  #     Jason.encode!(color_map, pretty: true)
-  #   )
-  #   {:noreply, push_event(socket, "color_timeline", %{colors: color_map})}
-  # end
 
   @impl true
   def handle_event("extract-process-save", _params, socket) do
@@ -162,13 +101,6 @@ defmodule ColorExtractorWeb.VideoLive do
 
         new_color_map = Map.put(color_map, map_size(color_map), colors)
 
-        # require IEx
-        # IEx.pry()
-
-        # Push update to frontend
-
-
-        #{:noreply, assign(socket, :color_map, new_color_map)}
         {:noreply, socket
           |> assign(:color_map, new_color_map)
           |> push_event("color_timeline", %{colors: new_color_map})}
@@ -182,14 +114,15 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def handle_info(:frames_extraction_complete, %{assigns: %{color_map: color_map}} = socket) do
-    Logger.info("FRAMES EXTRACTION COMPLETE")
     # require IEx
     # IEx.pry()
+    Logger.info("Saving colors to file...")
+    colors_by_second_file = Path.join(socket.assigns.video_metadata.extractiondir, "colors_by_second.json")
     File.write!(
-      "tmp/landscape/colors_by_second.json",
+      colors_by_second_file,
       Jason.encode!(color_map, pretty: true)
     )
-
+    Logger.info("Colors saved to: #{colors_by_second_file}")
     {:noreply, assign(socket, :loading, false)}
   end
 
@@ -208,20 +141,41 @@ defmodule ColorExtractorWeb.VideoLive do
     {:noreply, socket}
   end
 
-  def list_files_with_paths(dir) do
-    case File.ls(dir) do
-      {:ok, files} ->
-        files
-        |> Enum.map(&Path.join(dir, &1))
-        |> Enum.filter(fn path ->
-          File.regular?(path) and
-          (Path.extname(path) in [".jpg", ".jpeg", ".png"])
-        end)
 
-      {:error, reason} ->
-        Logger.error("Failed to list files: #{reason}")
-        []
-    end
+  @impl true
+  def handle_info({:process_video, file_name}, socket) do
+    socket = process_video(socket, file_name)
+    liveview_pid = self()
+    Task.start(fn ->
+      extract_frames(file_name)
+      send(liveview_pid, :frames_extraction_complete)
+    end)
+    {:noreply, socket}
+  end
+
+
+  defp process_video(socket, file_name) do
+    Logger.info("Starting video processing...")
+    file_name_no_ext = Path.rootname(file_name)
+    extraction_dir = Path.join(extractions_path(), file_name_no_ext)
+    File.mkdir_p!(extraction_dir)
+    frames_dir = Path.join("/tmp", file_name_no_ext)
+    File.mkdir_p!(frames_dir)
+    watch_path = Path.expand(frames_dir)
+    Logger.info("Watching path: #{inspect(watch_path)}")
+    {:ok, watcher_pid} = FileSystem.start_link(dirs: [watch_path])
+    FileSystem.subscribe(watcher_pid)
+
+    socket
+      |> assign(:loading, true)
+      |> assign(:watcher, watcher_pid)
+      |> assign(:color_map, %{})
+      |> assign(:video_metadata, %{
+        filename: file_name,
+        filenamenoext: file_name_no_ext,
+        extractiondir: extraction_dir,
+        framesdir: frames_dir
+      })
   end
 
 end
