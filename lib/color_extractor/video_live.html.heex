@@ -25,16 +25,20 @@
     </button>
   </form>
 
-
-  <%!-- <%= for file <- @uploaded_files do %>
-    <p class="mt-2 text-green-700">✅ Uploaded: <%= file %></p>
-    <video class="mt-2" width="400" controls>
-      <source src={"/uploads/#{file}"} type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  <% end %> --%>
-
   <div id="video-color-container" phx-hook="ColorReceiver">
+    <%= if @uploaded_video do %>
+      <video id="my-video" width="1080" controls>
+        <source src={@uploaded_video} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    <% end %>
+     <div id="colors" class="flex gap-2 mt-2">
+    <h2>Colors:</h2>
+      <!-- Color boxes will be inserted here -->
+    </div>
+  </div>
+
+  <%!-- <div id="video-color-container" phx-hook="ColorReceiver">
     <video id="my-video" controls width="1080">
       <source src="uploads/landscape.mp4" type="video/mp4" />
       Your browser does not support the video tag.
@@ -44,7 +48,7 @@
     <h2>Colors:</h2>
       <!-- Color boxes will be inserted here -->
     </div>
-  </div>
+  </div> --%>
 
     
 </div>

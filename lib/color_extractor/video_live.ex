@@ -13,6 +13,7 @@ defmodule ColorExtractorWeb.VideoLive do
         max_file_size: 100 * 1_024 * 1_024 # 100 MB
       )
       |> assign(:uploaded_files, [])
+      |> assign(:uploaded_video, nil)
 
     {:ok, socket}
   end
@@ -27,12 +28,16 @@ defmodule ColorExtractorWeb.VideoLive do
         raise "No files were uploaded."
       end
 
+      video_name = List.first(uploaded_files)
+      video_url = "/uploads/#{video_name}?v=#{System.system_time(:millisecond)}"
+
       socket = socket
         |> assign(:uploaded_files, uploaded_files)
+        |> assign(:uploaded_video, video_url)
         |> put_flash(:info, "File uploaded successfully!")
         # |> process_video(List.first(uploaded_files))
 
-      send(self(), {:process_video, List.first(uploaded_files)})
+      send(self(), {:process_video, video_name})
       {:noreply, socket}
     rescue e ->
       Logger.error("Upload failed: #{inspect(e)}")
