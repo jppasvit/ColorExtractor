@@ -10,15 +10,6 @@
       <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
         <.live_file_input upload={@uploads.video} />
         <%!-- <pre><%= inspect(@uploads) %></pre> --%>
-        <br />
-        <%!-- Button tracked by loading hook--%>
-        <button 
-          type="submit"
-          class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white"
-          phx-disable-with="Uploading..."
-          >
-          Upload
-        </button>
       </form>
     </div>
   </div>

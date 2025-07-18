@@ -11,7 +11,9 @@ defmodule ColorExtractorWeb.VideoLive do
       |> allow_upload(:video,
         accept: ~w(video/mp4 video/webm video/ogg),
         max_entries: 1,
-        max_file_size: 100 * 1_024 * 1_024 # 100 MB
+        max_file_size: 100 * 1_024 * 1_024, # 100 MB
+        auto_upload: true,
+        progress: &handle_progress/3
       )
       |> assign(:uploaded_files, [])
       |> assign(:uploaded_video, nil)
@@ -21,13 +23,14 @@ defmodule ColorExtractorWeb.VideoLive do
     {:ok, socket}
   end
 
- @impl true
-  def handle_event("upload", _params, socket) do
-    liveview_pid = self()
-    Task.start(fn ->
-      send(liveview_pid, :start_upload)
-    end)
-    {:noreply, socket
+  @impl true
+  def handle_progress(:video, entry, socket) do
+    if entry.done? do
+      # File finished uploading, trigger the event
+      send(self(), :start_upload)
+    end
+
+     {:noreply, socket
       |> assign(:loading, true)}
   end
 
@@ -49,39 +52,39 @@ defmodule ColorExtractorWeb.VideoLive do
     {:noreply, socket}
   end
 
-  @impl true
-  def handle_event("extract", _params, socket) do
-    extract_frames("landscape")
-    {:noreply, socket}
-  end
+  # @impl true
+  # def handle_event("extract", _params, socket) do
+  #   extract_frames("landscape")
+  #   {:noreply, socket}
+  # end
 
-  @impl true
-  def handle_event("process", _params, socket) do
-    image_paths = list_files_with_paths("tmp/landscape")
-    send(self(), {:process_colors, image_paths})
-    {:noreply, socket}
-  end
+  # @impl true
+  # def handle_event("process", _params, socket) do
+  #   image_paths = list_files_with_paths("tmp/landscape")
+  #   send(self(), {:process_colors, image_paths})
+  #   {:noreply, socket}
+  # end
 
-  @impl true
-  def handle_event("extract-process-save", _params, socket) do
-    # Start watching the directory
-    watch_path = Path.expand("/tmp/landscape")
-    Logger.info("#{inspect(watch_path)}")
-    {:ok, watcher_pid} = FileSystem.start_link(dirs: [watch_path])
-    FileSystem.subscribe(watcher_pid)
+  # @impl true
+  # def handle_event("extract-process-save", _params, socket) do
+  #   # Start watching the directory
+  #   watch_path = Path.expand("/tmp/landscape")
+  #   Logger.info("#{inspect(watch_path)}")
+  #   {:ok, watcher_pid} = FileSystem.start_link(dirs: [watch_path])
+  #   FileSystem.subscribe(watcher_pid)
 
-    liveview_pid = self()
-    Task.start(fn ->
-      extract_frames("landscape")
-      send(liveview_pid, :frames_extraction_complete)
-    end)
+  #   liveview_pid = self()
+  #   Task.start(fn ->
+  #     extract_frames("landscape")
+  #     send(liveview_pid, :frames_extraction_complete)
+  #   end)
 
-    # Save initial state
-    {:noreply,
-      socket
-      |> assign(:watcher, watcher_pid)
-      |> assign(:color_map, %{})}
-  end
+  #   # Save initial state
+  #   {:noreply,
+  #     socket
+  #     |> assign(:watcher, watcher_pid)
+  #     |> assign(:color_map, %{})}
+  # end
 
   @impl true
   def handle_info(
@@ -156,21 +159,20 @@ defmodule ColorExtractorWeb.VideoLive do
     end
   end
 
-  @impl true
-  def handle_info({:process_colors, [path | rest]}, socket) do
-    colors = extract_colors_python(path)
-    Logger.info("Pushing colors: #{inspect(colors)}")
-    socket = push_event(socket, "new_colors", %{colors: colors})
-    send(self(), {:process_colors, rest})
-    {:noreply, socket}
-  end
+  # @impl true
+  # def handle_info({:process_colors, [path | rest]}, socket) do
+  #   colors = extract_colors_python(path)
+  #   Logger.info("Pushing colors: #{inspect(colors)}")
+  #   socket = push_event(socket, "new_colors", %{colors: colors})
+  #   send(self(), {:process_colors, rest})
+  #   {:noreply, socket}
+  # end
 
-  @impl true
-  def handle_info({:process_colors, []}, socket) do
-    Logger.info("All colors processed.")
-    {:noreply, socket}
-  end
-
+  # @impl true
+  # def handle_info({:process_colors, []}, socket) do
+  #   Logger.info("All colors processed.")
+  #   {:noreply, socket}
+  # end
 
   @impl true
   def handle_info({:process_video, file_name}, socket) do
