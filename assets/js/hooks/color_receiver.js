@@ -6,7 +6,8 @@ export const ColorReceiver = {
     this.handleEvent("color_timeline", ({ colors }) => {
       console.log("Color timeline received:", colors)
       this.colorsMap = colors
-      this.container = document.getElementById("colors")
+      this.colorsContainer = document.getElementById("colors")
+      this.colorsContainerCode = document.getElementById("colors-code")
     })
   },
 
@@ -40,14 +41,41 @@ export const ColorReceiver = {
 
   updateColors(colors) {
     console.log("Colors:", colors)
-    this.container.innerHTML = ""
+    this.colorsContainer.innerHTML = ""
+    this.colorsContainerCode.innerHTML = ""
     colors.forEach(color => {
-      const div = document.createElement("div")
-      div.style.width = "154px"
-      div.style.height = "50px"
-      div.style.backgroundColor = color
-      div.title = color
-      this.container.appendChild(div)
+      const colorDiv = this.createColorDiv(color)
+      const colorCodeDiv = this.createColorCodeDiv(color)
+      this.colorsContainer.appendChild(colorDiv)
+      this.colorsContainerCode.appendChild(colorCodeDiv)
     })
+  },
+
+  createColorDiv(color) {
+    const div = document.createElement("div")
+    div.style.width = "154px"
+    div.style.height = "50px"
+    div.style.backgroundColor = color
+    div.title = color
+    return div
+  },
+
+  createColorCodeDiv(color) {
+    const div = document.createElement("div")
+    div.style.width = "154px"
+    div.style.height = "50px"
+    div.textContent = color
+    div.classList = "flex justify-center text-black"
+    return div
+  },
+
+  destroyed() {
+    console.log("ColorReceiver hook destroyed!")
+    if (this.video) {
+      this.video.removeEventListener("timeupdate", this.updateColors)
+      console.log("Removed timeupdate listener from video")
+    }
+    clearInterval(this.checkInterval)
+    console.log("Cleared check interval")
   }
 }
