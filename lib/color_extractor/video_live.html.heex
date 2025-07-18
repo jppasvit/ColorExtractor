@@ -6,13 +6,17 @@
   <div class="w-full md:w-1/2 flex justify-center p-4 hover:bg-brand/5">
     <div>
       <h2 class="text-xl font-bold mb-4">Upload Video</h2>
-
+      <%!-- TODO: Improve it to automatically process the video without submitting --%>
       <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
         <.live_file_input upload={@uploads.video} />
         <%!-- <pre><%= inspect(@uploads) %></pre> --%>
         <br />
-        <button type="submit"
-          class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white">
+        <%!-- Button tracked by loading hook--%>
+        <button 
+          type="submit"
+          class="bg-brand/20 text-brand px-4 py-2 mt-3 mb-3 rounded hover:bg-orange-700 hover:text-white"
+          phx-disable-with="Uploading..."
+          >
           Upload
         </button>
       </form>
@@ -47,6 +51,12 @@
     <div id="colors" class="flex gap-2 mt-2"></div>
   </div>
 </div>
+
+
+  <div id="loading-spinner" class={["fixed inset-0 bg-orange-950 bg-opacity-80 flex items-center justify-center z-50", unless(@loading, do: "hidden")]}>
+      <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-brand"></div>
+  </div>
+
 
 
   

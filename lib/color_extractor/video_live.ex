@@ -16,40 +16,19 @@ defmodule ColorExtractorWeb.VideoLive do
       |> assign(:uploaded_files, [])
       |> assign(:uploaded_video, nil)
       |> assign(:videos_to_select, videos_to_select)
+      |> assign(:loading, false)
 
     {:ok, socket}
   end
 
  @impl true
   def handle_event("upload", _params, socket) do
-    Logger.info("Starting video upload...")
-    uploaded_files = []
-    try do
-      uploaded_files = consume_uploaded_video(socket, :video)
-
-      if Enum.empty?(uploaded_files) do
-        raise "No files were uploaded."
-      end
-
-      video_name = List.first(uploaded_files)
-      video_url = "/uploads/#{video_name}"
-
-      socket = socket
-        |> assign(:uploaded_files, uploaded_files)
-        |> assign(:uploaded_video, video_url)
-        |> put_flash(:info, "File uploaded successfully!")
-        # |> process_video(List.first(uploaded_files))
-
-      send(self(), {:process_video, video_name})
-      {:noreply, socket}
-    rescue e ->
-      Logger.error("Upload failed: #{inspect(e)}")
-      socket = socket
-          |> assign(:uploaded_files, uploaded_files)
-          |> put_flash(:error, "Failed to upload the video: #{e.message}")
-
-      {:noreply, socket}
-    end
+    liveview_pid = self()
+    Task.start(fn ->
+      send(liveview_pid, :start_upload)
+    end)
+    {:noreply, socket
+      |> assign(:loading, true)}
   end
 
   @impl true
@@ -100,7 +79,6 @@ defmodule ColorExtractorWeb.VideoLive do
     # Save initial state
     {:noreply,
       socket
-      |> assign(:loading, true)
       |> assign(:watcher, watcher_pid)
       |> assign(:color_map, %{})}
   end
@@ -143,7 +121,39 @@ defmodule ColorExtractorWeb.VideoLive do
       Jason.encode!(color_map, pretty: true)
     )
     Logger.info("Colors saved to: #{colors_by_second_file}")
-    {:noreply, assign(socket, :loading, false)}
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info(:start_upload, socket) do
+    Logger.info("Starting video upload...")
+    uploaded_files = []
+    try do
+      uploaded_files = consume_uploaded_video(socket, :video)
+
+      if Enum.empty?(uploaded_files) do
+        raise "No files were uploaded."
+      end
+
+      video_name = List.first(uploaded_files)
+      video_url = "/uploads/#{video_name}"
+
+      socket = socket
+        |> assign(:uploaded_files, uploaded_files)
+        |> assign(:uploaded_video, video_url)
+        |> put_flash(:info, "File uploaded successfully!")
+        # |> process_video(List.first(uploaded_files))
+
+      send(self(), {:process_video, video_name})
+      {:noreply, socket}
+    rescue e ->
+      Logger.error("Upload failed: #{inspect(e)}")
+      socket = socket
+          |> assign(:uploaded_files, uploaded_files)
+          |> put_flash(:error, "Failed to upload the video: #{e.message}")
+
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -170,7 +180,8 @@ defmodule ColorExtractorWeb.VideoLive do
       extract_frames(file_name)
       send(liveview_pid, :frames_extraction_complete)
     end)
-    {:noreply, socket}
+    {:noreply, socket
+      |> assign(:loading, false)}
   end
 
 
@@ -187,7 +198,6 @@ defmodule ColorExtractorWeb.VideoLive do
     FileSystem.subscribe(watcher_pid)
 
     socket
-      |> assign(:loading, true)
       |> assign(:watcher, watcher_pid)
       |> assign(:color_map, %{})
       |> assign(:video_metadata, %{
