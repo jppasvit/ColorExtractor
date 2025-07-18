@@ -34,6 +34,16 @@ defmodule ColorExtractorWeb.VideoLive do
       |> assign(:loading, true)}
   end
 
+  # @impl true
+  # def handle_event("upload", _params, socket) do
+  #   liveview_pid = self()
+  #   Task.start(fn ->
+  #     send(liveview_pid, :start_upload)
+  #   end)
+  #   {:noreply, socket
+  #     |> assign(:loading, true)}
+  # end
+
   @impl true
   def handle_event("select_video", %{"video" => video_selected}, socket) do
     videos_to_select = list_files_with_paths(uploads_path(), [".mp4", ".webm", ".ogg"])
