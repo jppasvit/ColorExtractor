@@ -134,7 +134,10 @@ defmodule ColorExtractorWeb.VideoLive do
       Jason.encode!(color_map, pretty: true)
     )
     Logger.info("Colors saved to: #{colors_by_second_file}")
-    {:noreply, socket}
+
+    videos_to_select = list_files_with_paths(uploads_path(), [".mp4", ".webm", ".ogg"])
+    {:noreply, socket
+                  |> assign(videos_to_select: videos_to_select)}
   end
 
   @impl true
