@@ -15,7 +15,6 @@ defmodule ColorExtractorWeb.VideoLive do
         auto_upload: true,
         progress: &handle_progress/3
       )
-      |> assign(:uploaded_files, [])
       |> assign(:uploaded_video, nil)
       |> assign(:videos_to_select, videos_to_select)
       |> assign(:loading, false)
@@ -155,7 +154,6 @@ defmodule ColorExtractorWeb.VideoLive do
   @impl true
   def handle_info(:start_upload, socket) do
     Logger.info("Starting video upload...")
-    uploaded_files = []
     try do
       uploaded_files = consume_uploaded_video(socket, :video)
 
@@ -167,17 +165,14 @@ defmodule ColorExtractorWeb.VideoLive do
       video_url = "/uploads/#{video_name}"
 
       socket = socket
-        |> assign(:uploaded_files, uploaded_files)
         |> assign(:uploaded_video, video_url)
         |> put_flash(:info, "File uploaded successfully!")
-        # |> process_video(List.first(uploaded_files))
 
       send(self(), {:process_video, video_name})
       {:noreply, socket}
     rescue e ->
       Logger.error("Upload failed: #{inspect(e)}")
       socket = socket
-          |> assign(:uploaded_files, uploaded_files)
           |> put_flash(:error, "Failed to upload the video: #{e.message}")
 
       {:noreply, socket}
