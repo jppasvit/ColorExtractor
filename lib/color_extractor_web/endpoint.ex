@@ -8,6 +8,7 @@ defmodule ColorExtractorWeb.Endpoint do
     store: :cookie,
     key: "_color_extractor_key",
     signing_salt: "nDdy4uoC",
+    # timeout: 60_000 * 10, # 10 minutes // Deafult is 60s // Uncomment to increase session timeout
     same_site: "Lax"
   ]
 

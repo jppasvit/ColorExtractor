@@ -19,18 +19,21 @@ defmodule ColorExtractorWeb.VideoLive do
       |> assign(:uploaded_video, nil)
       |> assign(:videos_to_select, videos_to_select)
       |> assign(:loading, false)
+      |> assign(:option, :elixir)
+      |> assign(:elixir_duration, nil)
+      |> assign(:python_duration, nil)
 
     {:ok, socket}
   end
 
-  @impl true
   def handle_progress(:video, entry, socket) do
     if entry.done? do
       # File finished uploading, trigger the event
       send(self(), :start_upload)
     end
-
-     {:noreply, socket
+    # Reset durations if the option has changed
+    socket = reset_times(socket)
+    {:noreply, socket
       |> assign(:loading, true)}
   end
 
@@ -43,6 +46,17 @@ defmodule ColorExtractorWeb.VideoLive do
   #   {:noreply, socket
   #     |> assign(:loading, true)}
   # end
+
+  @impl true
+  def handle_event("set_option", %{"selected_option" => option}, socket) do
+    if option == "elixir" do
+      {:noreply, socket
+        |> assign(:option, :elixir)}
+    else
+      {:noreply, socket
+        |> assign(:option, :python)}
+    end
+  end
 
   @impl true
   def handle_event("select_video", %{"video" => video_selected}, socket) do
@@ -99,19 +113,17 @@ defmodule ColorExtractorWeb.VideoLive do
   @impl true
   def handle_info(
         {:file_event, _watcher_pid, {path, events}},
-        %{assigns: %{color_map: color_map}} = socket
+        %{assigns: %{color_map: color_map, option: option}} = socket
       ) do
-    Logger.info("File event detected: #{inspect({path, events})}")
+    # Logger.info("File event detected: #{inspect({path, events})}")
     # require IEx
     # IEx.pry()
+    extract_colors = if option == :elixir, do: &extract_colors_elixir/1, else: &extract_colors_python/1
     if Enum.any?(events, &(&1 in [:created])) and String.ends_with?(path, ".jpg") do
       unless Map.has_key?(color_map, path) do
         Logger.info("New frame detected: #{path}")
-        # colors = extract_colors_python(path)
-        colors = extract_colors_elixir(path)
-
+        colors = extract_colors.(path)
         new_color_map = Map.put(color_map, map_size(color_map), colors)
-
         {:noreply, socket
           |> assign(:color_map, new_color_map)
           |> push_event("color_timeline", %{colors: new_color_map})}
@@ -125,8 +137,8 @@ defmodule ColorExtractorWeb.VideoLive do
 
   @impl true
   def handle_info(:frames_extraction_complete, %{assigns: %{color_map: color_map}} = socket) do
-    # require IEx
-    # IEx.pry()
+    duration = end_timer(socket)
+    socket = link_time(socket, duration)
     Logger.info("Saving colors to file...")
     colors_by_second_file = Path.join(socket.assigns.video_metadata.extractiondir, "colors_by_second.json")
     File.write!(
@@ -190,6 +202,7 @@ defmodule ColorExtractorWeb.VideoLive do
   @impl true
   def handle_info({:process_video, file_name}, socket) do
     socket = process_video(socket, file_name)
+    socket = start_timer(socket) # Start time for processing
     liveview_pid = self()
     Task.start(fn ->
       extract_frames(file_name)
@@ -221,6 +234,50 @@ defmodule ColorExtractorWeb.VideoLive do
         extractiondir: extraction_dir,
         framesdir: frames_dir
       })
+  end
+
+  defp start_timer(socket) do
+    start_time = System.monotonic_time()
+    Logger.info("Timer started at: #{start_time}")
+    socket
+      |> assign(:start_time, start_time)
+  end
+
+  defp end_timer(socket) do
+    end_time = System.monotonic_time()
+    duration = System.convert_time_unit(end_time - socket.assigns.start_time, :native, :millisecond)
+    Logger.info("Timer ended at: #{end_time}, Duration: #{duration} ms")
+    duration
+  end
+
+  defp link_time(socket, duration) do
+    %{option: option} = socket.assigns
+    socket =
+        if option == :elixir do
+          assign(socket, :elixir_duration, duration)
+        else
+          assign(socket, :python_duration, duration)
+        end
+    socket
+  end
+
+  defp reset_times(socket) do
+    %{elixir_duration: elixir_duration, python_duration: python_duration, option: option} = socket.assigns
+    socket =
+      if elixir_duration != nil and option == :elixir do
+        assign(socket, :elixir_duration, nil)
+      else
+        socket
+      end
+
+    socket =
+      if python_duration != nil and option == :python do
+        assign(socket, :python_duration, nil)
+      else
+        socket
+      end
+
+      socket
   end
 
 end

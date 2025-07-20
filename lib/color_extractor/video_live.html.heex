@@ -7,10 +7,44 @@
     <div>
       <h2 class="text-xl font-bold mb-4">Upload Video</h2>
       <%!-- TODO: Improve it to automatically process the video without submitting --%>
-      <form phx-submit="upload" phx-change="validate" enctype="multipart/form-data">
+      <form phx-submit="upload" phx-change="set_option" enctype="multipart/form-data">
+        <label>
+          <input type="radio" name="selected_option" value="elixir" checked={@option == :elixir}/>
+          Extract colors with elixir
+        </label>
+        <br />
+        <label>
+          <input type="radio" name="selected_option" value="python" checked={@option == :python} />
+          Extract colors with python
+        </label>
+        <br />
+        <br />
         <.live_file_input upload={@uploads.video} />
         <%!-- <pre><%= inspect(@uploads) %></pre> --%>
       </form>
+      <%= if @elixir_duration != nil or @python_duration != nil do %>
+        <div class="mt-4">
+          <h3 class="text-lg font-semibold">Extraction Times</h3>
+          <table >
+            <tr>
+          <%= if @elixir_duration do %>
+            <th class="px-4" >Elixir</th>
+          <% end %>
+          <%= if @python_duration do %>
+            <th class="px-4">Python</th>
+          <% end %>
+            </tr>
+            <tr>
+          <%= if @elixir_duration do %>
+            <td class="px-4"><%= @elixir_duration %> ms</td>
+          <% end %>
+          <%= if @python_duration do %>
+            <td class="px-4"><%= @python_duration %> ms</td>
+          <% end %>
+            </tr>
+          </table>
+        </div>
+      <% end %>
     </div>
   </div>
   <div class="w-full md:w-1/2 flex justify-center p-4 hover:bg-brand/5">

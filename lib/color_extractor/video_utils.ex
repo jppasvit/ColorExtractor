@@ -49,6 +49,7 @@ defmodule ColorExtractor.VideoUtils do
 
   # Extract colors using Python script
   def extract_colors_python(path) do
+    Logger.info("Extracting colors using Python for: #{path}")
     {json, 0} =
       System.cmd("python3", ["scripts/color-extractor.py", path])
 
@@ -57,6 +58,7 @@ defmodule ColorExtractor.VideoUtils do
 
   # Extract colors using Elixir Image library
   def extract_colors_elixir(path) do
+    Logger.info("Extracting colors using Elixir for: #{path}")
     image = Image.open!(path)
     case Image.dominant_color(image,[{:top_n, 5}]) do
       {:ok, colors} ->
