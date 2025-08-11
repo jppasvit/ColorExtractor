@@ -20,9 +20,15 @@ defmodule ColorExtractor do
             extract_colors(images_path)
           end)
           IO.puts("Color extraction completed in #{elapsed} ms")
+
+          sorted_json =
+            fun_result
+            |> Enum.sort_by(fn {index, _colors} -> index end)
+            |> Jason.OrderedObject.new()
+
           File.write!(
-            "./cli_colors_by_second_file.json",
-            Jason.encode!(fun_result, pretty: true)
+            "./cli_colors_by_second_file_elixir.json",
+            Jason.encode!(sorted_json, pretty: true)
           )
       _ ->
         IO.puts("Invalid arguments. Usage: cli-color-extractor <images_path>")
