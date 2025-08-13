@@ -72,7 +72,7 @@ class ColorExtractor:
         tm.stop()
         if results is not None and len(results) > 0:
             print(f"Colors extracted successfully")
-            print(f"Color extraction completed in {tm.elapsed():.3f} seconds")
+            print(f"Color extraction completed in {tm.elapsed():.3f} ms")
             self.save_colors_to_file(dict(results))
         else:
             print("Error during color extraction")
