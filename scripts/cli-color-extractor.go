@@ -1,6 +1,7 @@
 package main
 
 import (
+  "encoding/json"
   "fmt"
   "image"
    _ "image/jpeg"
@@ -8,7 +9,7 @@ import (
   "os"
   "sync"
   "path/filepath"
-
+  "time"
   "github.com/EdlinOrg/prominentcolor"
 )
 
@@ -56,10 +57,10 @@ func extractColorsFromFile(filePath string, numColors int, index int, wg *sync.W
   return hexColors, nil
 }
 
-func extractColorsFromFolder(folder string, numColors int) {
+func extractColorsFromFolder(folder string, numColors int) ([]Result, error) {
   files, err := os.ReadDir(folder)
   if err != nil {
-    return
+    return nil, err
   }
   results := make(chan Result, len(files))
 
@@ -76,9 +77,28 @@ func extractColorsFromFolder(folder string, numColors int) {
   wg.Wait()
   close(results)
   
+  // for res := range results {
+  //   fmt.Printf("File: %s - Colors: %s - Index: %d\n", res.FileName, res.Colors, res.Index)
+  // }
+
+  var allResults []Result
   for res := range results {
-    fmt.Printf("File: %s - Colors: %s - Index: %d\n", res.FileName, res.Colors, res.Index)
+    allResults = append(allResults, res)
   }
+
+  return allResults, nil
+}
+
+func saveResultsToFile(results []Result, outputPath string) error {
+  absPath, err := filepath.Abs(outputPath)
+  if err != nil {
+    return err
+  }
+  data, err := json.MarshalIndent(results, "", "  ")
+  if err != nil {
+    return err
+  }
+  return os.WriteFile(absPath, data, 0644)
 }
 
 func main() {
@@ -86,5 +106,19 @@ func main() {
     fmt.Println("Usage: go run main.go <image-path>")
     return
   }
-  extractColorsFromFolder(os.Args[1], N_PREDOMINANT_COLORS)
+  fmt.Println("Extracting colors from images in folder:", os.Args[1])
+  start := time.Now().UnixNano()
+  results, colorErr := extractColorsFromFolder(os.Args[1], N_PREDOMINANT_COLORS)
+  if colorErr != nil {
+    fmt.Printf("Failed to extract colors: %v\n", colorErr)
+    return
+  }
+  fmt.Println("Colors extracted successfully")
+  err := saveResultsToFile(results, "./cli_colors_by_second_file_elixir.json")
+  if err != nil {
+    fmt.Printf("Failed to save results: %v\n", err)
+    return
+  }
+  elapsed := time.Now().UnixNano() - start
+  fmt.Printf("Color extraction completed in %.3f ms\n", float64(elapsed) / 1e6 )
 }
