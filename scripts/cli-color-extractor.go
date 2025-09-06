@@ -114,7 +114,6 @@ func (om OrderedMap) MarshalJSON() ([]byte, error) {
 	return out, nil
 }
 
-
 func getColorsFromRestults(results []Result) OrderedMap {
   colorsMap := make(map[int][]string)
   keys := make([]int, 0, len(results))
@@ -132,8 +131,6 @@ func getColorsFromRestults(results []Result) OrderedMap {
   }
   return orderedColorsMap;
 }
-
-
 
 func saveResultsToFile(results []Result, outputPath string) error {
   absPath, err := filepath.Abs(outputPath)
