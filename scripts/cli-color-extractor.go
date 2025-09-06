@@ -11,6 +11,8 @@ import (
   "path/filepath"
   "time"
   "github.com/EdlinOrg/prominentcolor"
+  "sort"
+  "strconv"
 )
 
 const N_PREDOMINANT_COLORS = 5
@@ -21,6 +23,13 @@ type Result struct {
     Colors   []string
     Err      error
 }
+
+type PairKV struct {
+    Key   string
+	  Value interface{}
+}
+
+type OrderedMap []PairKV
 
 func extractColorsFromFile(filePath string, numColors int, index int, wg *sync.WaitGroup, results chan<- Result) ([]string, error) {
   defer wg.Done()
@@ -89,12 +98,50 @@ func extractColorsFromFolder(folder string, numColors int) ([]Result, error) {
   return allResults, nil
 }
 
+func (om OrderedMap) MarshalJSON() ([]byte, error) {
+	out := []byte{'{'}
+	for i, kv := range om {
+		k, _ := json.Marshal(kv.Key)
+		v, _ := json.Marshal(kv.Value)
+		out = append(out, k...)
+		out = append(out, ':')
+		out = append(out, v...)
+		if i < len(om) - 1 {
+			out = append(out, ',')
+		}
+	}
+	out = append(out, '}')
+	return out, nil
+}
+
+
+func getColorsFromRestults(results []Result) OrderedMap {
+  colorsMap := make(map[int][]string)
+  keys := make([]int, 0, len(results))
+  for _, res := range results {
+    keys = append(keys, res.Index)
+    colorsMap[res.Index] = res.Colors
+  }
+  sort.Ints(keys)
+  orderedColorsMap := OrderedMap{}
+  for _, k := range keys {
+    orderedColorsMap = append(orderedColorsMap, PairKV{
+      Key: strconv.Itoa(k), 
+      Value: colorsMap[k],
+    })
+  }
+  return orderedColorsMap;
+}
+
+
+
 func saveResultsToFile(results []Result, outputPath string) error {
   absPath, err := filepath.Abs(outputPath)
   if err != nil {
     return err
   }
-  data, err := json.MarshalIndent(results, "", "  ")
+  colorsMap := getColorsFromRestults(results)
+  data, err := json.MarshalIndent(colorsMap, "", "  ")
   if err != nil {
     return err
   }
@@ -114,7 +161,7 @@ func main() {
     return
   }
   fmt.Println("Colors extracted successfully")
-  err := saveResultsToFile(results, "./cli_colors_by_second_file_elixir.json")
+  err := saveResultsToFile(results, "./cli_colors_by_second_file_go.json")
   if err != nil {
     fmt.Printf("Failed to save results: %v\n", err)
     return
