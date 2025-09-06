@@ -23,10 +23,12 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import { ColorReceiver } from "./hooks/color_receiver"
 import { ColorReceiverFlow } from "./hooks/color_receiver_flow"
+import { Camera } from "./hooks/camera"
 
 let hooks = {
   ColorReceiver,
-  ColorReceiverFlow
+  ColorReceiverFlow,
+  Camera
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {

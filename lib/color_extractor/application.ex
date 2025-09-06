@@ -16,7 +16,8 @@ defmodule ColorExtractor.Application do
       # Start a worker by calling: ColorExtractor.Worker.start_link(arg)
       # {ColorExtractor.Worker, arg},
       # Start to serve requests, typically the last entry
-      ColorExtractorWeb.Endpoint
+      ColorExtractorWeb.Endpoint,
+      ColorExtractor.WebcamStream
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

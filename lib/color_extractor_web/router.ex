@@ -24,6 +24,7 @@ defmodule ColorExtractorWeb.Router do
     pipe_through :browser
 
     live "/", VideoLive, :index
+    live "/streaming", StreamingLive, :index
     get "/upload", UploadController, :new
     post "/upload", UploadController, :create
   end

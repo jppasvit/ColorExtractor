@@ -57,7 +57,8 @@ defmodule ColorExtractor.MixProject do
       {:bandit, "~> 1.5"},
       {:uuid, "~> 1.1"},
       {:file_system, "~> 1.0.0"},
-      {:image, "~> 0.61.0"}
+      {:image, "~> 0.61.0"},
+      {:evision, "~> 0.2.14"},
     ]
   end
 
